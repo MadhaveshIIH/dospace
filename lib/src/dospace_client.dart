@@ -58,6 +58,7 @@ class Client {
           response.statusCode, response.reasonPhrase, response.headers, body);
     }
     xml.XmlDocument doc = XmlDocument.parse(body);
+
     return doc;
   }
 
