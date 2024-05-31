@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
@@ -49,17 +50,26 @@ class Client {
 
   @protected
   Future<xml.XmlDocument> getUri(Uri uri) async {
-    http.Request request = new http.Request('GET', uri);
-    signRequest(request);
-    http.StreamedResponse response = await httpClient.send(request);
-    String body = await utf8.decodeStream(response.stream);
-    if (response.statusCode != 200) {
-      throw new ClientException(
-          response.statusCode, response.reasonPhrase, response.headers, body);
+    try {
+      http.Request request = new http.Request('GET', uri);
+      signRequest(request);
+      http.StreamedResponse response = await http.Client().send(request);
+      String body = await utf8.decodeStream(response.stream);
+      if (response.statusCode != 200) {
+        throw new ClientException(
+            response.statusCode, response.reasonPhrase, response.headers, body);
+      }
+      xml.XmlDocument doc = xml.XmlDocument.parse(body);
+      return doc;
+    } on SocketException catch (e) {
+      print('Failed to lookup host: ${e.message}');
+      // Handle the error appropriately in your application
+      rethrow;
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+      // Handle other errors
+      rethrow;
     }
-    xml.XmlDocument doc = XmlDocument.parse(body);
-
-    return doc;
   }
 
   String _uriEncode(String str) {
